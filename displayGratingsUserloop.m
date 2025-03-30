@@ -12,7 +12,8 @@ persistent stimBorrow               % List of stimuli of the next block displaye
 
 % Createa table of all stimulus combinations and return timing file if it the very first call
 persistent stimTable
-persistent stimNum
+persistent stimLength
+persistent blockSum
 if isempty(stimTable)
     % Prerequisite variables (HARDCODED):
     params.RF = ["IN"]; % Receptive Field (RF) conditions, IN/OUT
@@ -20,12 +21,13 @@ if isempty(stimTable)
     params.ele = -2.5; % Elevations (deg), V1_dona = -2.5, V4_dona = -0.6
     params.radii = 1.5; % Aperture radii (deg)
     params.sf = 0.5*(2.^(3)); % Spatial Frequencies (SFs) (cpd)
-    params.ori = [0:22.5:157.5]; % Orientations (deg)
+    params.ori = [0 90]; % Orientations (deg)
     params.con = 25*(2.^(2)); % Contrasts (%)
 
     % Creating the stimulus table:
     stimTable = create_stimtable(params=params);
-    stimNum = size(stimTable, 1);
+    stimLength = size(stimTable, 1);
+    TrialRecord.User.StimTable = stimTable;
     return
 end
 
@@ -38,23 +40,30 @@ if isempty(TrialRecord.TrialErrors)                                         % If
     condition = 1;                                                          % set the condition # to 1
 elseif ~isempty(TrialRecord.TrialErrors) && 0==TrialRecord.TrialErrors(end) % If the last trial is a success
     stimList = setdiff(stimList, stimPrev);                                 % remove previous trial stimuli from the list of stimuli
-    condition = mod(condition+stim_per_trial-1, stimNum)+1;                 % increment the condition # by stim_per_trial
+    condition = mod(condition+stim_per_trial-1, stimLength)+1;                 % increment the condition # by stim_per_trial
 end
 
 % Initialize the conditions for a new block
 if isempty(stimList)                                            % If there are no stimuli left in the block
-    stimList = setdiff(1:stimNum, stimBorrow);       %
+    stimList = setdiff(1:stimLength, stimBorrow);       %
+    block=block+blockSum+1;
     stimBorrow = [];
-    block=block+1;
+    blockSum = 0;
 end
 
 if length(stimList)>=stim_per_trial                                         % If more than 2 stimuli left in the current block
     stimCurrent = datasample(stimList, stim_per_trial, 'Replace',false);    % randomly sample 3 stimuli from the list
     stimPrev = stimCurrent;
+elseif length(stimList)+stimLength>stim_per_trial
+    stimPrev = stimList;
+    stimBorrow = datasample(1:stimLength, stim_per_trial-length(stimList), 'Replace', false);
+    stimCurrent = [stimList stimBorrow];
+    stimCurrent = stimCurrent(randperm(stim_per_trial));
 else
     stimPrev = stimList;
-    stimBorrow = datasample(1:stimNum, stim_per_trial-length(stimList), 'Replace', false);
-    stimCurrent = [stimList stimBorrow];
+    blockSum = floor((stim_per_trial - length(stimList))/stimLength);
+    stimBorrow = datasample(1:stimLength, stim_per_trial-length(stimList)-blockSum*stimLength, 'Replace', false);
+    stimCurrent = [stimList repmat(1:stimLength,1,blockSum) stimBorrow];
     stimCurrent = stimCurrent(randperm(stim_per_trial));
 end
 
