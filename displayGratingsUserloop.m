@@ -16,11 +16,11 @@ persistent stimNum
 if isempty(stimTable)
     % Prerequisite variables (HARDCODED):
     params.RF = ["IN"]; % Receptive Field (RF) conditions, IN/OUT
-    params.azi = 0; % Azimuths (deg), V1_dona = -1.75, V4_dona = -1.35
-    params.ele = 0; % Elevations (deg), V1_dona = -2.5, V4_dona = -0.6
-    params.radii = 2.^(6); % Aperture radii (deg)
-    params.sf = 0.5*(2.^(0)); % Spatial Frequencies (SFs) (cpd)
-    params.ori = [0, 45, 90]; % Orientations (deg)
+    params.azi = -1.75; % Azimuths (deg), V1_dona = -1.75, V4_dona = -1.35
+    params.ele = -2.5; % Elevations (deg), V1_dona = -2.5, V4_dona = -0.6
+    params.radii = 1.5; % Aperture radii (deg)
+    params.sf = 0.5*(2.^(3)); % Spatial Frequencies (SFs) (cpd)
+    params.ori = [0:22.5:157.5]; % Orientations (deg)
     params.con = 25*(2.^(2)); % Contrasts (%)
 
     % Creating the stimulus table:
@@ -53,7 +53,7 @@ if length(stimList)>=stim_per_trial                                         % If
     stimPrev = stimCurrent;
 else
     stimPrev = stimList;
-    stimBorrow = datasample(stimNum, stim_per_trial-length(stimList), 'Replace', false);
+    stimBorrow = datasample(1:stimNum, stim_per_trial-length(stimList), 'Replace', false);
     stimCurrent = [stimList stimBorrow];
     stimCurrent = stimCurrent(randperm(stim_per_trial));
 end
