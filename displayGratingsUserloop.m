@@ -15,13 +15,53 @@ persistent stimTable
 persistent stimLength
 persistent blockSum
 if isempty(stimTable)
+    %%
+    % Create stimulator object
+    stimulator = cerestim96();
+    
+    %%
+    
+    % Scan for devices
+    DeviceList = stimulator.scanForDevices();
+
+    if ~isempty(DeviceList)
+    
+        % Select a device to connect to
+        stimulator.selectDevice(0);
+        
+        % Connect to the stimulator
+        stimulator.connect; 
+        
+        %%
+        % Program our waveform (stim pattern)
+        stimulator.setStimPattern('waveform',1,...% We can define multiple waveforms and distinguish them by ID
+            'polarity',0,...% 0=CF, 1=AF
+            'pulses',10,...% Number of pulses in stim pattern
+            'amp1',1,...% Amplitude in uA
+            'amp2',1,...% Amplitude in uA
+            'width1',100,...% Width for first phase in us
+            'width2',100,...% Width for second phase in us
+            'interphase',100,...% Time between phases in us
+            'frequency',20);% Frequency determines time between biphasic pulses
+        
+        %%
+        % Create a program sequence using any previously defined waveforms (we only have one)
+        stimulator.beginSequence; % Begin program definition
+            stimulator.autoStim(1, 1); % autoStim(Channel, Waveform ID)            
+        stimulator.endSequence; % End program definition
+        %%
+        TrialRecord.User.Stimulator = stimulator;
+    else
+        TrialRecord.User.Stimulator = [];
+        disp("No Stimulator Devices conected");
+    end
     % Prerequisite variables (HARDCODED):
     params.RF = ["IN"]; % Receptive Field (RF) conditions, IN/OUT
-    params.azi = -1.75; % Azimuths (deg), V1_dona = -1.75, V4_dona = -1.35
-    params.ele = -2.5; % Elevations (deg), V1_dona = -2.5, V4_dona = -0.6
-    params.radii = 1.5; % Aperture radii (deg)
-    params.sf = 0.5*(2.^(3)); % Spatial Frequencies (SFs) (cpd)
-    params.ori = [0 90]; % Orientations (deg)
+    params.azi = 0; % Azimuths (deg), V1_dona = -1.75, V4_dona = -1.35
+    params.ele = 0; % Elevations (deg), V1_dona = -2.5, V4_dona = -0.6
+    params.radii = 2.^(6); % Aperture radii (deg)
+    params.sf = 0.5*(2.^(0)); % Spatial Frequencies (SFs) (cpd)
+    params.ori = [0, 45, 90]; % Orientations (deg)
     params.con = 25*(2.^(2)); % Contrasts (%)
 
     % Creating the stimulus table:
