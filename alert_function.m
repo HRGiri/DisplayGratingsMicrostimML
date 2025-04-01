@@ -23,5 +23,9 @@ switch hook
             mglsetproperty(id2, 'looping',false, 'collective',false);
             mglplaysound(id2);
         end
+    case 'fini'
+        % clear the stimulator from memory
+        TrialRecord.User.Stimulator.disconnect;
+        TrialRecord.User.Stimulator = [];
 end
 end
