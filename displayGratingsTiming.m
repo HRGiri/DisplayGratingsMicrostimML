@@ -100,6 +100,7 @@ sceneISI = create_scene(wth4);
 % TASK:
 error_type = 0;
 flag = 0;
+stimulator = TrialRecord.User.Stimulator;
 
 while true
     run_scene(sceneFix);                            % Run the first scene (eventmaker 10)
@@ -109,6 +110,9 @@ while true
     if ~wth2.Success; error_type = 3; break; end    % If the WithThenHold failed (fixation is broken), this is a "break fixation (3)" error.
 
     for i=1:stim_per_trial-1
+        if ~isempty(stimulator)              
+            stimulator.play(1);                        % Play our program; number of repeats
+        end
         run_scene(sceneStim{i},20);                     % Run the scene for presenting i'th stimulus (eventmarker 20)
         if ~wth3.Success; error_type = 3; flag=1; break; end    % The failure of WithThenHold indicates that the subject didn't maintain fixation on the stimulus.
         
@@ -121,6 +125,9 @@ while true
     end
     if flag==1; break; end
 
+    if ~isempty(stimulator)              
+        stimulator.play(1);                                % Play our program; number of repeats
+    end
     run_scene(sceneStim{stim_per_trial},20);                       % Run the scene for presenting last stimulus (eventmarker 20)
     if ~wth3.Success; error_type = 3; break; end    % The failure of WithThenHold indicates that the subject didn't maintain fixation on the stimulus.
     
