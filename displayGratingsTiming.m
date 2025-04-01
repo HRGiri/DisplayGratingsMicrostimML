@@ -99,6 +99,7 @@ sceneISI = create_scene(wth4);
 
 % TASK:
 error_type = 0;
+flag = 0;
 
 while true
     run_scene(sceneFix);                            % Run the first scene (eventmaker 10)
@@ -109,15 +110,16 @@ while true
 
     for i=1:stim_per_trial-1
         run_scene(sceneStim{i},20);                     % Run the scene for presenting i'th stimulus (eventmarker 20)
-        if ~wth3.Success; error_type = 3; break; end    % The failure of WithThenHold indicates that the subject didn't maintain fixation on the stimulus.
+        if ~wth3.Success; error_type = 3; flag=1; break; end    % The failure of WithThenHold indicates that the subject didn't maintain fixation on the stimulus.
         
         if isi_duration ~= 0
             run_scene(sceneISI,10);
-            if ~wth4.Success; error_type = 3; break; end
+            if ~wth4.Success; error_type = 3; flag=1; break; end
         else
             eventmarker(10);
         end
     end
+    if flag==1; break; end
 
     run_scene(sceneStim{stim_per_trial},20);                       % Run the scene for presenting last stimulus (eventmarker 20)
     if ~wth3.Success; error_type = 3; break; end    % The failure of WithThenHold indicates that the subject didn't maintain fixation on the stimulus.
