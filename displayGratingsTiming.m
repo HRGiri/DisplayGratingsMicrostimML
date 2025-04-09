@@ -2,6 +2,7 @@
 hotkey('x', 'escape_screen(); assignin(''caller'',''continue_'',false);');  % Stop the task immediately if "x" key is pressed
 set_bgcolor([0.5 0.5 0.5]);                                                 % Sets subject screen background color to Gray
 bhv_variable('Stimuli', TrialRecord.User.Stimuli);                          % Save the current trial stimuli in data.UserVars variable
+bhv_variable('MicroStim', TrialRecord.User.MicroStim);
 
 % Initializing task variables
 if exist('eye_','var'), tracker = eye_;     % detect an available tracker
@@ -109,9 +110,9 @@ while true
     run_scene(sceneHold,10);
     if ~wth2.Success; error_type = 3; break; end    % If the WithThenHold failed (fixation is broken), this is a "break fixation (3)" error.
 
-    for i=1:stim_per_trial-1
-        if ~isempty(stimulator)              
-            stimulator.play(1);                        % Play our program; number of repeats
+    for i=1:stim_per_trial-1        
+        if TrialRecord.User.MicroStim(i)
+            stimulate(stimulator);
         end
         run_scene(sceneStim{i},20);                     % Run the scene for presenting i'th stimulus (eventmarker 20)
         if ~wth3.Success; error_type = 3; flag=1; break; end    % The failure of WithThenHold indicates that the subject didn't maintain fixation on the stimulus.
@@ -124,10 +125,10 @@ while true
         end
     end
     if flag==1; break; end
-
-    if ~isempty(stimulator)              
-        stimulator.play(1);                                % Play our program; number of repeats
-    end
+    
+    if TrialRecord.User.MicroStim(stim_per_trial)         
+        stimulate(stimulator);
+    end    
     run_scene(sceneStim{stim_per_trial},20);                       % Run the scene for presenting last stimulus (eventmarker 20)
     if ~wth3.Success; error_type = 3; break; end    % The failure of WithThenHold indicates that the subject didn't maintain fixation on the stimulus.
     

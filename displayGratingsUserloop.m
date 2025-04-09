@@ -14,6 +14,7 @@ persistent stimBorrow               % List of stimuli of the next block displaye
 persistent stimTable
 persistent stimLength
 persistent blockSum
+persistent microStimCondition
 if isempty(stimTable)
     %%
     % Create stimulator object
@@ -60,14 +61,40 @@ if isempty(stimTable)
     params.azi = 0; % Azimuths (deg), V1_dona = -1.75, V4_dona = -1.35
     params.ele = 0; % Elevations (deg), V1_dona = -2.5, V4_dona = -0.6
     params.radii = 2.^(6); % Aperture radii (deg)
-    params.sf = 0.5*(2.^(0)); % Spatial Frequencies (SFs) (cpd)
-    params.ori = [0, 45, 90]; % Orientations (deg)
-    params.con = 25*(2.^(2)); % Contrasts (%)
+    params.sf = 0.5*(2.^(0:1)); % Spatial Frequencies (SFs) (cpd)
+    params.ori = (0:45:135); % Orientations (deg)
+    params.con = 25*(2.^(1)); % Contrasts (%)
 
     % Creating the stimulus table:
     stimTable = create_stimtable(params=params);
     stimLength = size(stimTable, 1);
     TrialRecord.User.StimTable = stimTable;
+
+    % Condition when microstim is required (HARDCODED)
+    cond.sf = 1;
+    cond.ori = 90;
+    cond.con = 50;
+
+    TrialRecord.User.MicroStimCondition = cond;
+
+    % Determine the condition index
+    microStimCondition = 0;
+    condition_names = ["sf"  "ori" "con"];      % Only these for now, will update other params when required
+    for i=1:stimLength
+        match_condition = true;
+        for j=1:size(condition_names,2)
+            if stimTable{i,condition_names(j)} ~= cond.(condition_names(j))
+                match_condition = false;
+                break;
+            end            
+        end
+        
+        if match_condition
+            microStimCondition = i;
+            break;
+        end
+    end
+    
     return
 end
 
@@ -128,6 +155,9 @@ end
 
 TrialRecord.User.Stimuli = stimCurrent;                     % save the stimuli for the next trial in user variable
 TrialRecord.User.stim_idx = 1;
+
+% Logical array for microstim
+TrialRecord.User.MicroStim = stimCurrent == microStimCondition;
 
 % Set the block number and the condition number of the next trial
 TrialRecord.NextBlock = block;
