@@ -18,7 +18,7 @@ wait_for_fix = 1000;
 hold_fix = 1000;
 stimulus_duration = 800;
 isi_duration = 700;
-pulse_duration = 50;
+Pulse_duration = 50;
 
 % fixation point parameters:
 fix_size = 0.2;             % circle diameter (in degrees)
@@ -30,7 +30,7 @@ hold_window = fix_window ;
 microstim_enable = false;   % if false (or unchecked on the control screen), the task acts like a grating protocol
 
 % Add variables on the Control screen to make on-the-fly changes
-editable('pulse_duration','fix_window','fix_size');
+editable('Pulse_duration','fix_window','fix_size');
 editable('-color', 'fix_color');
 editable('stim_per_trial','wait_for_fix','hold_fix','stimulus_duration','isi_duration');
 editable('microstim_enable');
@@ -93,9 +93,12 @@ stimCurrent = TrialRecord.User.Stimuli;
 stimulator = Cerestim(null_,...
     TrialRecord.User.Stimulator, ...
     TrialRecord.User.MicrostimChannel,...
+    stimTable{stimCurrent,"delay"},...
     stimTable{stimCurrent,"amp"},...
     stimTable{stimCurrent,"frequency"},...
-    stimTable{stimCurrent,"pulses"},...    
+    stimTable{stimCurrent,"Pulses"},... 
+        stimTable{stimCurrent,"Pulse_number"},...    
+
     stimTable{stimCurrent,"duration"});
 if ~microstim_enable, stimulator.disableStimulator(); end
 
@@ -144,7 +147,7 @@ while true
     if ~wth3.Success; error_type = 3; break; end    % The failure of WithThenHold indicates that the subject didn't maintain fixation on the stimulus.
     
     idle(0);                                        % Clear screens
-    goodmonkey(pulse_duration, 'juiceline',1, 'numreward',1, 'pausetime',0, 'eventmarker',50);   % Successful trial, give reward
+    goodmonkey(Pulse_duration, 'juiceline',1, 'numreward',1, 'pausetime',0, 'eventmarker',50);   % Successful trial, give reward
     break
 end
 

@@ -1,15 +1,25 @@
 classdef Cerestim < mladapter  % Cerestim Adapter Class
      
-    properties
-        % User variables (both readable and writable)
-        Stimulator = []     % Stimmex cerestim96 stimulator object
-        Channel = 1         % Channel to stimulate on
-        Amplitude = []      % Array of amplitudes (uA) for the current trial
-        Frequency = []      % Array of frequency (Hz) for the current trial
-        Pulses = []         % Array of no. of pulses for the current trial
-        Duration = []       % Array of duration (ms) for the current trial
-        verbose = 0         % Verbosity during running of trial (1: display during the start of the trial)
-    end
+%
+%specifying a range of delays (ISIs)
+%
+
+
+properties
+    % User variables (both readable and writable)
+    Stimulator = []     % Stimmex cerestim96 stimulator object
+    Channel = []
+    %Channel2 = 8
+    delay = []
+    Amplitude = []      % Array of amplitudes (uA) for the current trial
+    Frequency = []      % Array of frequency (Hz) for the current trial
+    Pulses = 1       %dummy variable, always stays 1  % Array of no. of Pulses for the current trial
+    Pulse_number=7;
+    Duration = []       % Array of duration (ms) for the current trial
+    verbose = 0         % Verbosity during running of trial (1: display during the start of the trial)
+end
+
+
     properties (SetAccess = protected)
         % Output variables (only readable)
         
@@ -22,20 +32,22 @@ classdef Cerestim < mladapter  % Cerestim Adapter Class
 
     methods        
         % The first line of the constructor and four other methods (init, fini, analyze, draw) must be a call for the base class method.        
-        function obj = Cerestim(varargin)    % Cerestim(mladapter, stimulator, channel, amplitude, frequency, pulses, duration)
-            obj@mladapter(varargin{1});      % Call to base class. It is necessary to complete the adapter chain.            
+        function obj = Cerestim(varargin)    % Cerestim(mladapter, stimulator, channel, amplitude, frequency, Pulses, duration)
+            obj@mladapter(varargin{1});      % Call to base class. It is necessary to complete the adapter chain.
             % Assign values to user variables
             obj.Stimulator = varargin{2};
             obj.Channel = varargin{3};
-            obj.Amplitude = varargin{4};
-            obj.Frequency = varargin{5};
-            obj.Pulses = varargin{6};            
-            obj.Duration = varargin{7};
-
+            %obj.Channel2 = varargin{4};
+            obj.delay = varargin{4};
+            obj.Amplitude = varargin{5};
+            obj.Frequency = varargin{6};
+            obj.Pulses = varargin{7};
+            obj.Pulse_number = varargin{8};
+            obj.Duration = varargin{9};
             obj.setPatterns();
             
         end
-        function delete(obj) 
+        function delete(obj)
             % Things to do when this adapter is destroyed by MATLAB
             obj.disableStimulator();
         end
@@ -50,16 +62,54 @@ classdef Cerestim < mladapter  % Cerestim Adapter Class
 
         function continue_ = analyze(obj,p)
             continue_ = analyze@mladapter(obj,p);  % Call to base class. It is necessary to complete the adapter chain.
-            
-            % Set the sequence for uStim in the first frame of the scene            
-            if p.scene_frame() == 0                
-                if ~isempty(obj.Stimulator)                    
+
+            % Set the sequence for uStim in the first frame of the scene
+            if p.scene_frame() == 0
+                if ~isempty(obj.Stimulator)
                     if obj.doStim(obj.currStimNum)
                         % Create a program sequence using the waveform defined above
                         obj.Stimulator.beginSequence; % Begin program definition
-                            obj.Stimulator.autoStim(obj.Channel, obj.currStimNum); % autoStim(Channel, Waveform ID)                
-                        obj.Stimulator.endSequence; % End program definition                        
-                    end                        
+
+                        %                         obj.Stimulator.autoStim(obj.Channel(1), obj.currStimNum); % autoStim(Channel 1, Waveform ID)
+                        %                         obj.Stimulator.wait(obj.delay(obj.currStimNum));
+                        %                         obj.Stimulator.autoStim(obj.Channel(2), obj.currStimNum); % autoStim(Channel 2, Waveform ID)
+                        %
+
+                        % Parameters
+                        ISI = obj.delay(obj.currStimNum);          %delay between A and B
+                        freq= obj.Frequency(obj.currStimNum);
+                        interPairInterval = (1000/freq)-ISI; % delay between Pulse pairs
+
+                        % Main loop
+                        if(ISI ~= -1 || ISI ~=-2)
+                        for i = 1:obj.Pulse_number
+                            obj.Stimulator.autoStim(obj.Channel(1), obj.currStimNum); % autoStim(Channel 1, Waveform ID)
+
+                            obj.Stimulator.wait(ISI);  % wait delay m
+
+                            %  pause(ISI);                    % wait delay ms
+                            obj.Stimulator.autoStim(obj.Channel(2), obj.currStimNum); % autoStim(Channel 2, Waveform ID)
+                            obj.Stimulator.wait(interPairInterval);      % wait before next Pulse pair
+                        end
+                        end
+
+                        if(ISI == -1)
+                            obj.Stimulator.wait(1);  % wait delay m
+
+                        end
+
+                        if(ISI == -2)
+                            obj.Stimulator.autoStim(obj.Channel(2), obj.currStimNum); % autoStim(Channel 2, Waveform ID)
+
+
+                        end
+
+
+
+
+
+                        obj.Stimulator.endSequence; % End program definition
+                    end
                 end
             end
 
@@ -89,36 +139,37 @@ classdef Cerestim < mladapter  % Cerestim Adapter Class
                 obj.printToCommand('clc');
                 for i=1:totalStim
                     amp = obj.Amplitude(i);
-                    pulses = obj.Pulses(i);
+                    Pulses = obj.Pulses(i);
+                    Pulse_number=obj.Pulse_number;
                     frequency = obj.Frequency(i);
                     duration = obj.Duration(i);                    
                     obj.printToCommand("Microstimulation(I=" + amp...
-                            + ", n=" + pulses + ...
+                            + ", n=" + Pulses + ...
                             ", f=" + frequency + ")");
                     
                     % Do not set stim patterns for the following values
-                    if amp == 0 || pulses == 0  || frequency < 16
+                    if amp == 0 || Pulses == 0  || frequency < 16
                         obj.doStim = cat(1,obj.doStim,false);
                         continue
                     else
                         obj.doStim = cat(1,obj.doStim,true);
                     end
                     
-                    % When duration > 0, pulses is determined by frequency
+                    % When duration > 0, Pulses is determined by frequency
                     if duration > 0
-                        pulses = 1 + (duration * frequency) / 1000;
+                        Pulses = 1 + (duration * frequency) / 1000;
                     end
                                         
                     % Program our waveforms (stim patterns)
                     obj.Stimulator.setStimPattern('waveform',i,...% We can define multiple waveforms and distinguish them by ID
                         'polarity',0,...% 0=CF, 1=AF
-                        'pulses',pulses,...% Number of pulses in stim pattern
+                        'Pulses',Pulses,...% Number of Pulses in stim pattern
                         'amp1',amp,...% Amplitude of first phase in uA
                         'amp2',amp,...% Amplitude of second phase in uA
                         'width1',170,...% Width for first phase in us
                         'width2',170,...% Width for second phase in us
                         'interphase',60,...% Time between phases in us
-                        'frequency',frequency);% Frequency determines time between biphasic pulses                        
+                        'frequency',frequency);% Frequency determines time between biphasic Pulses                        
                 end                
             else
                 obj.printToCommand("Cannot do microstimulation as no device connected");

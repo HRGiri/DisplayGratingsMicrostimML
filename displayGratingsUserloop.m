@@ -36,21 +36,27 @@ if isempty(stimTable)
     params.con = 25*(2.^(1)); % Contrasts (%)
     
     % Microstimulation parameters
-    params.amp = 16;   % Current amplitude (uA)
-    params.pulses = 7;  % Number of biphasic pulses
-    params.frequency = [0,20,30,40,50,60,70,80];  % Frequency of biphasic pulses
-    params.duration = 300; % ms; When duration > 0, pulses is determined by frequency
+    params.delay = [-2,-1,0,1,2,3,4,6,8,10,15,20];
+    params.amp = 64;   % Current amplitude (uA)
+    params.Pulses = 1;  % Number of biphasic Pulses
+        params.Pulse_number = 7;  % Number of biphasic Pulses
+
+    params.frequency = 20;  % Frequency of biphasic Pulses
+    %params.duration = 300; % ms; When duration > 0, Pulses is determined by frequency
+    params.duration = 0; % ms; When duration > 0, Pulses is determined by frequency
 
 
     % Creating the stimulus table:
-    stimTable = create_stimtable(params=params);
+    %stimTable = create_stimtable(params=params);
+        stimTable = create_stimtable(params=params);
+
     stimLength = size(stimTable, 1);
     TrialRecord.User.StimTable = stimTable;
     
     % Define the channel to be stimulated
     % Ch 12 -> elec1-27
     % Ch 95 -> elec1-1
-    TrialRecord.User.MicrostimChannel = 95;
+    TrialRecord.User.MicrostimChannel = [95, 96];
 
     %%
     % Create stimulator object
@@ -59,7 +65,8 @@ if isempty(stimTable)
     %%
     
     % Scan for devices
-    DeviceList = stimulator.scanForDevices();    
+    %DeviceList = stimulator.scanForDevices();    
+    DeviceList = [];    
 
     if ~isempty(DeviceList)
     
