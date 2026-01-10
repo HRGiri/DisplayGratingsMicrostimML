@@ -25,10 +25,12 @@ switch hook
         end
     case 'fini'
         % clear the stimulator from memory
-        if ismember('Stimulator', fieldnames(TrialRecord.User))
-            if ~isempty(TrialRecord.User.Stimulator)
-                TrialRecord.User.Stimulator.disconnect;
-                TrialRecord.User.Stimulator = [];
+        if ~isempty(TrialRecord.User)
+            if ismember('Stimulator', fieldnames(TrialRecord.User))
+                if ~isempty(TrialRecord.User.Stimulator)
+                    TrialRecord.User.Stimulator.disconnect;
+                    TrialRecord.User.Stimulator = [];
+                end
             end
         end
 end

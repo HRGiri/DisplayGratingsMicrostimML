@@ -19,6 +19,7 @@ hold_fix = 1000;
 stimulus_duration = 800;
 isi_duration = 700;
 pulse_duration = 50;
+allow_early_fix = false;
 
 % fixation point parameters:
 fix_size = 0.2;             % circle diameter (in degrees)
@@ -33,7 +34,7 @@ microstim_enable = false;   % if false (or unchecked on the control screen), the
 editable('pulse_duration','fix_window','fix_size');
 editable('-color', 'fix_color');
 editable('stim_per_trial','wait_for_fix','hold_fix','stimulus_duration','isi_duration');
-editable('microstim_enable');
+editable('microstim_enable', 'allow_early_fix');
 
 % creating useful adapters
 % Graphic adapter for fixation point
@@ -62,7 +63,7 @@ fix1.Threshold = fix_window;    % Examines if the gaze is in the Threshold windo
 wth1 = WaitThenHold(fix1);      % 
 wth1.WaitTime = wait_for_fix;   % 
 wth1.HoldTime = 1;              % Supposed to be 0, but if kept 0 ML thinks the subject didn't hold fixation and WTH adapter's success condition doesn't become true
-wth1.AllowEarlyFix = true;     % End the scene if the monkey is fixating before the scene starts
+wth1.AllowEarlyFix = allow_early_fix;     % End the scene if the monkey is fixating before the scene starts
 con1 = Concurrent(wth1);        %
 con1.add(sndTrialStart);        % Start the trial and concurrently play the trialStart audio
 

@@ -18,6 +18,8 @@ classdef Cerestim < mladapter  % Cerestim Adapter Class
         % Internal variables
         currStimNum = 1       % Current stim number in trial
         doStim = []         % Logical array of whether to stimulate for the current trial, based on hardware limits
+        isSetPattern = false
+        isStimulate = false
     end
 
     methods        
@@ -41,7 +43,9 @@ classdef Cerestim < mladapter  % Cerestim Adapter Class
         end
         
         function init(obj,p)
-            init@mladapter(obj,p);  % Call to base class. It is necessary to complete the adapter chain.                                   
+            init@mladapter(obj,p);  % Call to base class. It is necessary to complete the adapter chain.
+            obj.isSetPattern = false;
+            obj.isStimulate = false;
         end
 
         function fini(obj,p)
@@ -51,8 +55,10 @@ classdef Cerestim < mladapter  % Cerestim Adapter Class
         function continue_ = analyze(obj,p)
             continue_ = analyze@mladapter(obj,p);  % Call to base class. It is necessary to complete the adapter chain.
             
+
             % Set the sequence for uStim in the first frame of the scene            
-            if p.scene_frame() == 0                
+%             if p.scene_frame() == 0
+            if ~obj.isSetPattern
                 if ~isempty(obj.Stimulator)                    
                     if obj.doStim(obj.currStimNum)
                         % Create a program sequence using the waveform defined above
@@ -61,6 +67,7 @@ classdef Cerestim < mladapter  % Cerestim Adapter Class
                         obj.Stimulator.endSequence; % End program definition                        
                     end                        
                 end
+                obj.isSetPattern = true;
             end
 
             obj.Success = obj.Adapter.Success;  % Assign the child adapter's success state, if there's no analysis.
@@ -70,12 +77,14 @@ classdef Cerestim < mladapter  % Cerestim Adapter Class
             draw@mladapter(obj,p);  % Call to base class. It is necessary to complete the adapter chain.
             
             % Stimulate on the first frame of the scene
-            if p.scene_frame() == 0 
+%             if p.scene_frame() == 0 
+            if ~obj.isStimulate
                 if ~isempty(obj.Stimulator)
                     if obj.doStim(obj.currStimNum)                    
                         obj.Stimulator.play(1);                        % Play our program; number of repeats
                     end
                 end
+                obj.isStimulate = true;
                 obj.currStimNum = obj.currStimNum + 1;
             end            
         end
@@ -84,7 +93,7 @@ classdef Cerestim < mladapter  % Cerestim Adapter Class
             % This function sets the waveform patterns for all stimuli of
             % the current trial. Call this function after setting the
             % required user variables.
-            totalStim = length(obj.Amplitude);
+            totalStim = length(obj.Amplitude);            
             if ~isempty(obj.Stimulator)
                 obj.printToCommand('clc');
                 for i=1:totalStim

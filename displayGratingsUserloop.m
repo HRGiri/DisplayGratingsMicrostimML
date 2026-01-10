@@ -33,14 +33,13 @@ if isempty(stimTable)
     params.radii = 1000; % Aperture radii (deg)
     params.sf = 0.5*(2.^(0:3)); % Spatial Frequencies (SFs) (cpd)
     params.ori = (0:45:135); % Orientations (deg)
-    params.con = 25*(2.^(1)); % Contrasts (%)
+    params.con = [0,25,50,100]; %25*(2.^(1)); % Contrasts (%)
     
     % Microstimulation parameters
-    params.amp = 16;   % Current amplitude (uA)
-    params.pulses = 7;  % Number of biphasic pulses
-    params.frequency = [0,20,30,40,50,60,70,80];  % Frequency of biphasic pulses
-    params.duration = 300; % ms; When duration > 0, pulses is determined by frequency
-
+    params.amp = [0, 2, 4, 8, 16, 32, 64];   % Current amplitude (uA)
+    params.pulses = 7;%[0, 2, 3, 4, 5, 6, 7];  % Number of biphasic pulses
+    params.frequency = 40;%[0,20,30,40,50,60,70];  % Frequency of biphasic pulses
+    params.duration = 0; % ms; When duration > 0, pulses is determined by frequenc
 
     % Creating the stimulus table:
     stimTable = create_stimtable(params=params);
@@ -48,9 +47,22 @@ if isempty(stimTable)
     TrialRecord.User.StimTable = stimTable;
     
     % Define the channel to be stimulated
+    % For Dona
     % Ch 12 -> elec1-27
     % Ch 95 -> elec1-1
-    TrialRecord.User.MicrostimChannel = 95;
+    % Ch 24 -> elec1-6
+    % Ch 56 -> elec1-42
+    % Ch 55 -> elec1-41
+    % Ch 57 -> elec1-31
+    % For Jojo
+    % Ch 35 -> elec2-76
+    % Ch 84 -> elec2-70
+    % Ch 70 -> elec2-85
+    % Ch 79 -> elec2-89
+    % Ch 72 -> elec2-84
+    % Ch 33 -> elec2-77
+    % Ch 41 -> elec2-73
+    TrialRecord.User.MicrostimChannel = 41;
 
     %%
     % Create stimulator object
