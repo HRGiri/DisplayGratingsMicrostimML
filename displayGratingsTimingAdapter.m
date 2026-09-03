@@ -29,12 +29,14 @@ hold_window = fix_window ;
 
 % microstim controls
 microstim_enable = false;   % if false (or unchecked on the control screen), the task acts like a grating protocol
+cerestim_verbosity = 0;
 
 % Add variables on the Control screen to make on-the-fly changes
 editable('pulse_duration','fix_window','fix_size');
 editable('-color', 'fix_color');
 editable('stim_per_trial','wait_for_fix','hold_fix','stimulus_duration','isi_duration');
 editable('microstim_enable', 'allow_early_fix');
+editable('cerestim_verbosity');
 
 % creating useful adapters
 % Graphic adapter for fixation point
@@ -91,22 +93,21 @@ wth3.HoldTime = stimulus_duration;
 
 stimTable = TrialRecord.User.StimTable;
 stimCurrent = TrialRecord.User.Stimuli;
-stimulator = Cerestim(null_,...
+stimulator = Cerestim(wth3,...
     TrialRecord.User.Stimulator, ...
     TrialRecord.User.MicrostimChannel,...
     stimTable{stimCurrent,"amp"},...
     stimTable{stimCurrent,"frequency"},...
     stimTable{stimCurrent,"pulses"},...    
     stimTable{stimCurrent,"duration"},...
-    TrialRecord.User.Offset);
+    stimTable{stimCurrent,"width"},...
+    TrialRecord.User.Offset,...
+    cerestim_verbosity);
 if ~microstim_enable, stimulator.disableStimulator(); end
-
-con3 = Concurrent(wth3);
-con3.add(stimulator);
 
 sceneStim = cell(1,stim_per_trial);
 for i=1:stim_per_trial    
-    sceneStim{i} = create_scene(con3, stim(i)); % present stimulus i
+    sceneStim{i} = create_scene(stimulator, stim(i)); % present stimulus i
 end
 
 % sceneISI: hold fixation until next stimulus

@@ -25,47 +25,27 @@ persistent blockSum
 
 if isempty(stimTable)    
 
-    % Prerequisite variables (HARDCODED):
-    % Grating parameters
-    params.RF = ["IN"]; % Receptive Field (RF) conditions, IN/OUT
-    params.azi = 0; % Azimuths (deg), V1_dona = -1.75, V4_dona = -1.35
-    params.ele = 0; % Elevations (deg), V1_dona = -2.5, V4_dona = -0.6
-    params.radii = 1000; % Aperture radii (deg)
-    params.sf = 0.5*(2.^(0:3)); % Spatial Frequencies (SFs) (cpd)
-    params.ori = (0:45:135); % Orientations (deg)
-    params.con = [0,25,50,100]; %25*(2.^(1)); % Contrasts (%)
-    
-    % Microstimulation parameters
-    params.amp = 2; %[0, 2, 4, 8, 16, 32, 64];   % Current amplitude (uA)
-    params.pulses = 7;%[0, 2, 3, 4, 5, 6, 7];  % Number of biphasic pulses
-    params.frequency = 20;%[0,20,30,40,50,60,70];  % Frequency of biphasic pulses
-    params.duration = 0; % ms; When duration > 0, pulses is determined by frequenc
+    % Prerequisite variables from a params file
+%     paramsMicrostimMidterm;
+%     paramsSFOriCon;
+%     paramsRFMap;
+    paramsSFOriConMicrostimAmp;
+%     paramsSFOriConMicrostimPulses;
+%     paramsSFOriConMicrostimFrequency;
+%     paramsSFOriConMicrostimWidth;
+    disp(params)
 
     % Creating the stimulus table:
     stimTable = create_stimtable(params=params);
-    stimLength = size(stimTable, 1);
+    stimLength = size(stimTable, 1);    
+    disp(['Total parameter combinations: ' num2str(stimLength)]);
     TrialRecord.User.StimTable = stimTable;
     
     % Define the time offset between visual stim and microstim
-    TrialRecord.User.Offset = 400;  % ms
+    TrialRecord.User.Offset = 0;  % ms
 
     % Define the channel to be stimulated
-    % For Dona
-    % Ch 12 -> elec1-27
-    % Ch 95 -> elec1-1
-    % Ch 24 -> elec1-6
-    % Ch 56 -> elec1-42
-    % Ch 55 -> elec1-41
-    % Ch 57 -> elec1-31
-    % For Jojo
-    % Ch 35 -> elec2-76
-    % Ch 84 -> elec2-70
-    % Ch 70 -> elec2-85
-    % Ch 79 -> elec2-89
-    % Ch 72 -> elec2-84
-    % Ch 33 -> elec2-77
-    % Ch 41 -> elec2-73
-    TrialRecord.User.MicrostimChannel = 41;
+    TrialRecord.User.MicrostimChannel = microstimChannel;
 
     %%
     % Create stimulator object

@@ -8,6 +8,7 @@ classdef Cerestim < mladapter  % Cerestim Adapter Class
         Frequency = []      % Array of frequency (Hz) for the current trial
         Pulses = []         % Array of no. of pulses for the current trial
         Duration = []       % Array of duration (ms) for the current trial
+        Width = []          % Array of widths (us) for the current trial
         Offset = 0          % Time offset from visual stim (ms)
         verbose = 0         % Verbosity during running of trial (1: display during the start of the trial)
     end
@@ -34,7 +35,10 @@ classdef Cerestim < mladapter  % Cerestim Adapter Class
             obj.Frequency = varargin{5};
             obj.Pulses = varargin{6};            
             obj.Duration = varargin{7};
-            obj.Offset = varargin{8};
+            obj.Width = varargin{8};
+            obj.Offset = varargin{9};
+
+            obj.verbose = varargin{10};
 
             obj.setPatterns();
             
@@ -51,7 +55,8 @@ classdef Cerestim < mladapter  % Cerestim Adapter Class
         end
 
         function fini(obj,p)
-            fini@mladapter(obj,p);  % Call to base class. It is necessary to complete the adapter chain.
+            fini@mladapter(obj,p);  % Call to base class. It is necessary to complete the adapter chain.            
+            
         end
 
         function continue_ = analyze(obj,p)
@@ -60,8 +65,9 @@ classdef Cerestim < mladapter  % Cerestim Adapter Class
 
             % Set the sequence for uStim in the first frame of the scene
             % afer offset
-            if p.scene_time() >= obj.Offset                
+            if p.scene_time() >= obj.Offset                 
                 if ~obj.isSetPattern
+%                     disp(p.scene_time())
                     if ~isempty(obj.Stimulator)                    
                         if obj.doStim(obj.currStimNum)
                             % Create a program sequence using the waveform defined above
@@ -74,6 +80,15 @@ classdef Cerestim < mladapter  % Cerestim Adapter Class
                 end
             end
 
+%             if ~continue_
+%                 status = obj.Stimulator.getSequenceStatus();
+%                 
+%                 if status == 2      % in the middle of stimulation
+%                     disp("Stop Stimulation")
+%                     obj.Stimulator.stop()
+%                 end
+%             end
+
             obj.Success = obj.Adapter.Success;  % Assign the child adapter's success state, if there's no analysis.
 
         end
@@ -82,7 +97,7 @@ classdef Cerestim < mladapter  % Cerestim Adapter Class
             
             % Stimulate on the first frame of the scene after the offset
             if p.scene_time() >= obj.Offset
-                if ~obj.isStimulate
+                if ~obj.isStimulate && obj.isSetPattern
                     if ~isempty(obj.Stimulator)
                         if obj.doStim(obj.currStimNum)                    
                             obj.Stimulator.play(1);                        % Play our program; number of repeats
@@ -92,6 +107,13 @@ classdef Cerestim < mladapter  % Cerestim Adapter Class
                     obj.currStimNum = obj.currStimNum + 1;
                 end
             end
+
+%             status = obj.Stimulator.getSequenceStatus();
+%             
+%             if status == 2      % in the middle of stimulation
+%                 disp("Stop Stimulation")
+%                 obj.Stimulator.stop()
+%             end
         end
 
         function setPatterns(obj)   
@@ -105,13 +127,15 @@ classdef Cerestim < mladapter  % Cerestim Adapter Class
                     amp = obj.Amplitude(i);
                     pulses = obj.Pulses(i);
                     frequency = obj.Frequency(i);
-                    duration = obj.Duration(i);                    
+                    duration = obj.Duration(i);   
+                    width = obj.Width(i);
                     obj.printToCommand("Microstimulation(I=" + amp...
                             + ", n=" + pulses + ...
-                            ", f=" + frequency + ")");
+                            ", f=" + frequency + ...
+                            ", w=" + width + ")");
                     
                     % Do not set stim patterns for the following values
-                    if amp == 0 || pulses == 0  || frequency < 16
+                    if amp == 0 || pulses == 0  || frequency < 16 || width == 0
                         obj.doStim = cat(1,obj.doStim,false);
                         continue
                     else
@@ -122,6 +146,12 @@ classdef Cerestim < mladapter  % Cerestim Adapter Class
                     if duration > 0
                         pulses = 1 + (duration * frequency) / 1000;
                     end
+
+                    if width > 0
+                        amp = 1360/width;
+                    else
+                        width = 170;
+                    end
                                         
                     % Program our waveforms (stim patterns)
                     obj.Stimulator.setStimPattern('waveform',i,...% We can define multiple waveforms and distinguish them by ID
@@ -129,8 +159,8 @@ classdef Cerestim < mladapter  % Cerestim Adapter Class
                         'pulses',pulses,...% Number of pulses in stim pattern
                         'amp1',amp,...% Amplitude of first phase in uA
                         'amp2',amp,...% Amplitude of second phase in uA
-                        'width1',170,...% Width for first phase in us
-                        'width2',170,...% Width for second phase in us
+                        'width1',width,...% Width for first phase in us
+                        'width2',width,...% Width for second phase in us
                         'interphase',60,...% Time between phases in us
                         'frequency',frequency);% Frequency determines time between biphasic pulses                        
                 end                
