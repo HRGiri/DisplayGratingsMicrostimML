@@ -36,9 +36,9 @@ if isempty(stimTable)
     params.con = [0,25,50,100]; %25*(2.^(1)); % Contrasts (%)
     
     % Microstimulation parameters
-    params.amp = [0, 2, 4, 8, 16, 32, 64];   % Current amplitude (uA)
+    params.amp = 2; %[0, 2, 4, 8, 16, 32, 64];   % Current amplitude (uA)
     params.pulses = 7;%[0, 2, 3, 4, 5, 6, 7];  % Number of biphasic pulses
-    params.frequency = 40;%[0,20,30,40,50,60,70];  % Frequency of biphasic pulses
+    params.frequency = 20;%[0,20,30,40,50,60,70];  % Frequency of biphasic pulses
     params.duration = 0; % ms; When duration > 0, pulses is determined by frequenc
 
     % Creating the stimulus table:
@@ -46,6 +46,9 @@ if isempty(stimTable)
     stimLength = size(stimTable, 1);
     TrialRecord.User.StimTable = stimTable;
     
+    % Define the time offset between visual stim and microstim
+    TrialRecord.User.Offset = 400;  % ms
+
     % Define the channel to be stimulated
     % For Dona
     % Ch 12 -> elec1-27

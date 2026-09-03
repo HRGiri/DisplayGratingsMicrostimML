@@ -8,6 +8,7 @@ classdef Cerestim < mladapter  % Cerestim Adapter Class
         Frequency = []      % Array of frequency (Hz) for the current trial
         Pulses = []         % Array of no. of pulses for the current trial
         Duration = []       % Array of duration (ms) for the current trial
+        Offset = 0          % Time offset from visual stim (ms)
         verbose = 0         % Verbosity during running of trial (1: display during the start of the trial)
     end
     properties (SetAccess = protected)
@@ -33,6 +34,7 @@ classdef Cerestim < mladapter  % Cerestim Adapter Class
             obj.Frequency = varargin{5};
             obj.Pulses = varargin{6};            
             obj.Duration = varargin{7};
+            obj.Offset = varargin{8};
 
             obj.setPatterns();
             
@@ -56,18 +58,20 @@ classdef Cerestim < mladapter  % Cerestim Adapter Class
             continue_ = analyze@mladapter(obj,p);  % Call to base class. It is necessary to complete the adapter chain.
             
 
-            % Set the sequence for uStim in the first frame of the scene            
-%             if p.scene_frame() == 0
-            if ~obj.isSetPattern
-                if ~isempty(obj.Stimulator)                    
-                    if obj.doStim(obj.currStimNum)
-                        % Create a program sequence using the waveform defined above
-                        obj.Stimulator.beginSequence; % Begin program definition
-                            obj.Stimulator.autoStim(obj.Channel, obj.currStimNum); % autoStim(Channel, Waveform ID)                
-                        obj.Stimulator.endSequence; % End program definition                        
-                    end                        
+            % Set the sequence for uStim in the first frame of the scene
+            % afer offset
+            if p.scene_time() >= obj.Offset                
+                if ~obj.isSetPattern
+                    if ~isempty(obj.Stimulator)                    
+                        if obj.doStim(obj.currStimNum)
+                            % Create a program sequence using the waveform defined above
+                            obj.Stimulator.beginSequence; % Begin program definition
+                                obj.Stimulator.autoStim(obj.Channel, obj.currStimNum); % autoStim(Channel, Waveform ID)                
+                            obj.Stimulator.endSequence; % End program definition                        
+                        end                        
+                    end
+                    obj.isSetPattern = true;
                 end
-                obj.isSetPattern = true;
             end
 
             obj.Success = obj.Adapter.Success;  % Assign the child adapter's success state, if there's no analysis.
@@ -76,17 +80,18 @@ classdef Cerestim < mladapter  % Cerestim Adapter Class
         function draw(obj,p)
             draw@mladapter(obj,p);  % Call to base class. It is necessary to complete the adapter chain.
             
-            % Stimulate on the first frame of the scene
-%             if p.scene_frame() == 0 
-            if ~obj.isStimulate
-                if ~isempty(obj.Stimulator)
-                    if obj.doStim(obj.currStimNum)                    
-                        obj.Stimulator.play(1);                        % Play our program; number of repeats
+            % Stimulate on the first frame of the scene after the offset
+            if p.scene_time() >= obj.Offset
+                if ~obj.isStimulate
+                    if ~isempty(obj.Stimulator)
+                        if obj.doStim(obj.currStimNum)                    
+                            obj.Stimulator.play(1);                        % Play our program; number of repeats
+                        end
                     end
+                    obj.isStimulate = true;
+                    obj.currStimNum = obj.currStimNum + 1;
                 end
-                obj.isStimulate = true;
-                obj.currStimNum = obj.currStimNum + 1;
-            end            
+            end
         end
 
         function setPatterns(obj)   
